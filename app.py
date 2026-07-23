@@ -2,11 +2,23 @@
 
 import json
 import os
+from urllib.parse import parse_qs
 from wsgiref.simple_server import make_server
 
 HOST = "0.0.0.0"
 DEFAULT_PORT = 8000
 WELCOME_MESSAGE = "Welcome to the Git Flow project!"
+
+
+def build_message(query_string: str) -> str:
+    """Build a default or personalized greeting."""
+    parameters = parse_qs(query_string)
+    name = parameters.get("name", [""])[0]
+
+    if name:
+        return f"Hello, {name}! Welcome to the Git Flow project."
+
+    return WELCOME_MESSAGE
 
 
 def application(environment, start_response):
@@ -22,7 +34,8 @@ def application(environment, start_response):
         )
         return [body]
 
-    body = json.dumps({"message": WELCOME_MESSAGE}).encode("utf-8")
+    message = build_message(environment.get("QUERY_STRING", ""))
+    body = json.dumps({"message": message}).encode("utf-8")
     start_response(
         "200 OK",
         [
