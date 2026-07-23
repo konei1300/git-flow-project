@@ -63,13 +63,13 @@ Réponse :
 Construire l’image :
 
 ```bash
-docker build --tag greeting-api:1.0.0 .
+docker build --tag greeting-api:1.0.1 .
 ```
 
 Démarrer le conteneur :
 
 ```bash
-docker run --rm --name greeting-api --publish 8000:8000 greeting-api:1.0.0
+docker run --rm --name greeting-api --publish 8000:8000 greeting-api:1.0.1
 ```
 
 ## Structure du projet
@@ -86,7 +86,7 @@ docker run --rm --name greeting-api --publish 8000:8000 greeting-api:1.0.0
 
 ## Version
 
-Version actuelle : `1.0.0`
+Version actuelle : `1.0.1`
 
 ## Auteur
 

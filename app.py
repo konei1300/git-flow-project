@@ -13,7 +13,7 @@ WELCOME_MESSAGE = "Welcome to the Git Flow project!"
 def build_message(query_string: str) -> str:
     """Build a default or personalized greeting."""
     parameters = parse_qs(query_string)
-    name = parameters.get("name", [""])[0]
+    name = parameters.get("name", [""])[0].strip()
 
     if name:
         return f"Hello, {name}! Welcome to the Git Flow project."
