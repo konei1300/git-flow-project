@@ -1,0 +1,60 @@
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS'
+      when: never
+    - if: '$CI_COMMIT_BRANCH'
+
+stages:
+  - test
+  - build
+  - deploy
+
+default:
+  tags:
+    - review-apps
+  interruptible: true
+
+unit_tests:
+  stage: test
+  script:
+    - python3 -m unittest discover --start-directory tests --verbose
+
+build_review_image:
+  stage: build
+  script:
+    - docker build --tag "greeting-api:${CI_COMMIT_REF_SLUG}-${CI_COMMIT_SHORT_SHA}" .
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $CI_COMMIT_BRANCH != "develop"'
+
+deploy_review:
+  stage: deploy
+  needs:
+    - build_review_image
+  resource_group: "review-${CI_COMMIT_REF_SLUG}"
+  script:
+    - ./scripts/deploy-review.sh
+  environment:
+    name: "review/${CI_COMMIT_REF_SLUG}"
+    url: "http://${CI_COMMIT_REF_SLUG}.${REVIEW_BASE_DOMAIN}:${REVIEW_PORT}/"
+    on_stop: stop_review
+    auto_stop_in: 1 day
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $CI_COMMIT_BRANCH != "develop"'
+
+stop_review:
+  stage: deploy
+  resource_group: "review-${CI_COMMIT_REF_SLUG}"
+  script:
+    - ./scripts/stop-review.sh
+  environment:
+    name: "review/${CI_COMMIT_REF_SLUG}"
+    action: stop
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: manual
+    - if: '$CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $CI_COMMIT_BRANCH != "develop"'
+      when: manual
+  allow_failure: true
